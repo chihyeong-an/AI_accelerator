@@ -46,6 +46,12 @@ module tb_accumCol;
         clk = ~clk;
     end // always
 
+/* 
+first step,  and i= -2 and reset signal turn on
+second step, i=-1 and reset signal turn off
+next step, i=0 and else loop is operated wr_data = 0, wr_addr = 0, rd_addr= -1 % 8 = 7
+           i=1 and else loop is operated wr_data = 1, wr_addr = 1, rd_addr = 0
+*/
     always @(negedge clk) begin
         i = count - 2;
 
