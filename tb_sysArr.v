@@ -37,7 +37,12 @@ module tb_sysArr();
     );
 
     defparam DUT.width_height = width_height;
-
+/*
+#0, all data is defined 0
+#10, w_in is entered 32'h0403_0201(it mean [4,3,2,1] array) and write pe but mac_out = 0
+#50, from this time it start entering data_in and mutiplier is activated
+#60, mac_out is produced 
+*/
     always begin
         #5;
         clk = ~clk;
@@ -76,11 +81,11 @@ module tb_sysArr();
         #10
 
         datain = 32'h0000_0000;
-        active = 1'b1;
+        active = 1'b1; // multiplier is activated
 
         #10;
 
-        datain = 32'h0000_0401;
+        datain = 32'h0000_0401; // data_in = [0,0,4,1]
 
         #10;
 
