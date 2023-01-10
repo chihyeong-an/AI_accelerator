@@ -31,7 +31,7 @@ module tb_pe();
 
     initial begin
         clk = 1'b0; 
-        active = 1'b0; 
+        active = 1'b1; 
         wwrite = 1'b0;
         datain = 8'h00;
         w_in = 8'h00;
