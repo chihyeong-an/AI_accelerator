@@ -9,7 +9,7 @@ module sysArr(
     sumin,
     wwrite,
     maccout,
-    //wout,
+    wout,
     //wwriteout,
     activeout,
     dataout
@@ -29,7 +29,7 @@ module sysArr(
 
     // Outputs from bottom row of array
     output wire [sum_width-1:0] maccout; // 16 bit output of result matrix
-    //output wire [weight_width-1:0] wout; // Not used
+    output wire [weight_width-1:0] wout; // Not used
     //output wire [width_height-1:0] wwriteout; // Not used
     output wire [width_height-1:0] activeout; // Not used
 
@@ -37,10 +37,10 @@ module sysArr(
     output [data_width-1:0] dataout; // 8 bits for each row. Top row has LSB
 
     // Interconnects (Row - Row Connections)
-    wire [(width_height*16)-1:0] maccout_inter;
-    wire [(width_height*8)-1:0] wout_inter;
+    wire [((width_height-1)*width_height*16)-1:0] maccout_inter;
+    wire [((width_height-1)*width_height*8)-1:0] wout_inter;
     //wire [((width_height-1)*width_height)-1:0] wwriteout_inter;
-    wire [(width_height)-1:0] activeout_inter;
+    wire [((width_height-1)*width_height)-1:0] activeout_inter;
 
     genvar i;
     generate
