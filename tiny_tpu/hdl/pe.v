@@ -1,39 +1,5 @@
 
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2023/01/10 22:36:30
-// Design Name: 
-// Module Name: pe
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-// This is a single processing element in the matrix multiply unit.
-
-// Inputs:
-//
-// clk -- global clk signal
-// active -- if high, we are performing multiplies and passing values
-// datain -- 8-bit datain (matrix element)
-// win -- 8-bit weight value
-// sumin -- sum input from previous element in array
-// wwrite -- control update of internal weight
-
-// Outputs:
-//
-// maccout -- datain * weight + sumin
-// dataout -- pass datain to the right
 
 module pe(
     input clk,
