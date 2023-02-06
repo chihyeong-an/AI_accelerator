@@ -1,9 +1,8 @@
 // top.v
-// Cameron Shinn and Wesly Tonks
 
 module top (
-    clk,
-    reset,
+    axi_clk,
+    axi_reset,
     start,
     done,
     opcode,
@@ -33,8 +32,8 @@ module top (
 // ------------ Inputs --------------------
 // ========================================
 
-    input clk;
-    input reset;
+    input axi_clk;
+    input axi_reset;
     input start;
     input [2:0] opcode;
     input [$clog2(WIDTH_HEIGHT)-1:0] dim_1;
@@ -44,6 +43,7 @@ module top (
     input [$clog2(MAX_MAT_WH/WIDTH_HEIGHT)-1:0] accum_table_submat_row_in;
     input [$clog2(MAX_MAT_WH/WIDTH_HEIGHT)-1:0] accum_table_submat_col_in;
     input [WIDTH_HEIGHT*DATA_WIDTH-1:0] inputMem_wr_data;
+    
     input [WIDTH_HEIGHT*DATA_WIDTH-1:0] weightMem_wr_data;
 
 
@@ -114,8 +114,8 @@ module top (
 // ========================================
     
     master_control master_control(
-        .clk                      (clk),
-        .reset                    (reset),
+        .clk                      (axi_clk),
+        .reset                    (axi_reset),
         .reset_out                (reset_global),
         .start                    (start),
         .done                     (done),
@@ -161,15 +161,15 @@ module top (
 // ========================================
 
     sysArr sysArr(
-        .clk      (clk),
+        .clk      (axi_clk),
         .active   (sys_arr_active2),            // from control or software
         .datain   (inputMem_to_sysArr),         // from inputMem
         .win      (weightFifo_to_sysArr),       // from weightFifo
         .sumin    (256'd0),                     // can be used for biases
-        .wwrite   (weight_write),               // from fifo_arr
+        .wwrite   (weight_write),         // from fifo_arr
         .maccout  (accumTable_wr_data),         // to accumTable
-        //.wout     (),                           // Not used
-        //.wwriteout(),                         // Not used
+        .wout     (),                           // Not used
+        //.wwriteout(),                           // Not used
         .activeout(mmu_col_valid_out),          // en for accumTable_wr_control
         .dataout  ()                            // Not used
     );
@@ -181,7 +181,7 @@ module top (
 // =========================================
     
     memArr inputMem(
-        .clk    (clk),
+        .clk    (axi_clk),
         .rd_en  (inputMem_rd_en),               // from inputMemControl
         .wr_en  ({WIDTH_HEIGHT{inputMem_wr_en}}), // from master_control
         .wr_data(inputMem_wr_data),             // from interconnect (INPUT)
@@ -192,7 +192,7 @@ module top (
     defparam inputMem.width_height = WIDTH_HEIGHT;
 
     rd_control inputMemControl (
-        .clk      (clk),
+        .clk      (axi_clk),
         .reset    (reset_global),               // from master_control
         .active   (data_mem_calc_en),           // from master_control
         .rd_en    (inputMem_rd_en),             // to inputMem
@@ -207,7 +207,7 @@ module top (
 // ========================================
     
     memArr weightMem(
-        .clk    (clk),
+        .clk    (axi_clk),
         .rd_en  (weightMem_rd_en),              // from master_control
         .wr_en  ({WIDTH_HEIGHT{weightMem_wr_en}}), // from master_control
         .wr_data(weightMem_wr_data),            // from interconnect (INPUT)
@@ -218,7 +218,7 @@ module top (
     defparam weightMem.width_height = WIDTH_HEIGHT;
 
     fifo_control mem_fifo (
-        .clk         (clk),
+        .clk         (axi_clk),
         .reset       (reset_global),            // from master_control
         .active      (in_fifo_active),          // from master_control
         .stagger_load(1'b0),                    // never stagger when filling
@@ -229,7 +229,7 @@ module top (
     defparam mem_fifo.fifo_width = WIDTH_HEIGHT;
 
     fifo_control fifo_arr (
-        .clk         (clk),
+        .clk         (axi_clk),
         .reset       (reset_global),            // from master_control
         .active      (out_fifo_active),         // from master_control
         .stagger_load(1'b0),                    // fucntionality not implemented
@@ -240,7 +240,7 @@ module top (
     defparam fifo_arr.fifo_width = WIDTH_HEIGHT;
 
     weightFifo weightFifo (
-        .clk      (clk),
+        .clk      (axi_clk),
         .reset    (reset_global),               // from master_control
         .en       (mem_to_fifo_en | fifo_to_arr_en), // from mem_fifo & fifo_arr
         .weightIn (weightMem_rd_data),          // from weightMem
@@ -254,9 +254,9 @@ module top (
 // =========================================
 // --------- Output side of array ----------
 // =========================================
- // /*   aaaa
+    
     accumTable accumTable (
-        .clk    (clk),
+        .clk    (axi_clk),
         .clear  ({WIDTH_HEIGHT{reset_global}} | {WIDTH_HEIGHT{accum_clear}}),
         .rd_en  ({WIDTH_HEIGHT{1'b1}}),         // FIXME: figure out where this signal should come from
         .wr_en  (accumTable_wr_en_in),          // from accumTableWr_control
@@ -272,9 +272,10 @@ module top (
     defparam accumTable.MAX_OUT_COLS = MAX_MAT_WH;
 
     accumTableWr_control accumTableWr_control (
-        .clk        (clk),
+        .clk        (axi_clk),
         .reset      (reset_global),             // from master_control
         .wr_en_in   (mmu_col_valid_out[0]),     // from sysArr
+        .data_mem_calc_done (data_mem_calc_done),
         .sub_row    (wr_accumTable_mat_row),    // from master_control
         .submat_m   (wr_accumTable_submat_row), // from master_control
         .submat_n   (wr_accumTable_submat_col), // from master_control
@@ -306,8 +307,8 @@ module top (
     defparam reluArr.ARR_INPUTS = WIDTH_HEIGHT;
 
     outputArr outputMem (
-        .clk    (clk),
-        .rd_en  ({WIDTH_HEIGHT{outputMem_rd_en}}), // from master_control
+        .clk    (axi_clk),
+        .rd_en  (outputMem_rd_en), // from master_control
         .wr_en  (outputMem_wr_en),              // from master_control
         .wr_data(outputMem_wr_data),            // from reluArr
         .rd_addr({WIDTH_HEIGHT{mem_addr_bus_data}}), // from master_control
@@ -315,7 +316,6 @@ module top (
         .rd_data(outputMem_rd_data)             // to interconect (OUTPUT)
     );
     defparam outputMem.width_height = WIDTH_HEIGHT;
-// aaaa*/
 
     /* FIXME: determine if this module is needed (don't think it is)
     wr_control outputMemControl (
@@ -347,11 +347,10 @@ module top (
         end // for (i = 0; i < WIDTH_HEIGHT; i++)
     end
 
-    always @(posedge clk) begin
+    always @(posedge axi_clk) begin
 
-        // set sys_arr_active 2 cycles after we read memory
-        sys_arr_active1 <= sys_arr_active;
-        sys_arr_active2 <= sys_arr_active1;
+        // set sys_arr_active 2 cycles after we read memory    
+        sys_arr_active2 <= sys_arr_active;
 
     end // always
 
